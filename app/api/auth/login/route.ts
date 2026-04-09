@@ -1,150 +1,34 @@
-import { NextResponse } from "next/server"
-import { db } from "@/lib/db"
-import { users } from "@/lib/schema"
-import { eq } from "drizzle-orm"
-import bcrypt from "bcryptjs"
-import jwt from "jsonwebtoken"
-
-const JWT_SECRET = process.env.JWT_SECRET
-if (!JWT_SECRET) {
-  throw new Error("JWT_SECRET is not defined in environment variables")
-}
+import { NextResponse } from "next/server";
+import { AuthService } from "@/features/auth/services/auth-service";
 
 export async function POST(request: Request) {
   try {
-    const body = await request.json()
-    const { email, password } = body
+    const { email, password } = await request.json();
 
     if (!email || !password) {
       return NextResponse.json(
-        {
-          error: "Email e senha são obrigatórios",
-        },
-        { status: 400 },
-      )
+        { error: "Email e senha são obrigatórios" },
+        { status: 400 }
+      );
     }
 
-    // Buscar usuário por email
-    const user = await db.select().from(users).where(eq(users.email, email)).limit(1)
-
-    if (!user.length) {
-      return NextResponse.json(
-        {
-          error: "Credenciais inválidas",
-        },
-        { status: 401 },
-      )
-    }
-
-    // Verificar senha
-    const isValidPassword = await bcrypt.compare(password, user[0].password_hash)
-
-    if (!isValidPassword) {
-      return NextResponse.json(
-        {
-          error: "Credenciais inválidas",
-        },
-        { status: 401 },
-      )
-    }
-
-    // Gerar token JWT
-    const token = jwt.sign(
-      {
-        userId: user[0].id,
-        email: user[0].email,
-      },
-      JWT_SECRET,
-      { expiresIn: "7d" },
-    )
-
-    // Retornar dados do usuário (sem senha)
-    const { password_hash, ...userWithoutPassword } = user[0]
+    const user = await AuthService.login(email, password);
 
     return NextResponse.json({
-      user: userWithoutPassword,
-      token,
+      success: true,
+      user,
       message: "Login realizado com sucesso",
-    })
-  } catch (error) {
-    console.error("Erro no login:", error)
+    });
+  } catch (error: any) {
+    console.error("Login mapping error:", error);
     return NextResponse.json(
-      {
-        error: "Erro interno do servidor",
-      },
-      { status: 500 },
-    )
+      { error: error.message || "Credenciais inválidas" },
+      { status: 401 }
+    );
   }
 }
 
-// Rota para registro de usuário
-export async function PUT(request: Request) {
-  try {
-    const body = await request.json()
-    const { name, email, password } = body
-
-    if (!name || !email || !password) {
-      return NextResponse.json(
-        {
-          error: "Nome, email e senha são obrigatórios",
-        },
-        { status: 400 },
-      )
-    }
-
-    // Verificar se usuário já existe
-    const existingUser = await db.select().from(users).where(eq(users.email, email)).limit(1)
-
-    if (existingUser.length > 0) {
-      return NextResponse.json(
-        {
-          error: "Email já está em uso",
-        },
-        { status: 409 },
-      )
-    }
-
-    // Hash da senha
-    const saltRounds = 10
-    const hashedPassword = await bcrypt.hash(password, saltRounds)
-
-    // Criar usuário
-    const newUser = await db
-      .insert(users)
-      .values({
-        name,
-        email,
-        password_hash: hashedPassword,
-        created_at: new Date(),
-        updated_at: new Date(),
-      })
-      .returning()
-
-    // Gerar token JWT
-    const token = jwt.sign(
-      {
-        userId: newUser[0].id,
-        email: newUser[0].email,
-      },
-      JWT_SECRET,
-      { expiresIn: "7d" },
-    )
-
-    // Retornar dados do usuário (sem senha)
-    const { password_hash, ...userWithoutPassword } = newUser[0]
-
-    return NextResponse.json({
-      user: userWithoutPassword,
-      token,
-      message: "Usuário criado com sucesso",
-    })
-  } catch (error) {
-    console.error("Erro no registro:", error)
-    return NextResponse.json(
-      {
-        error: "Erro interno do servidor",
-      },
-      { status: 500 },
-    )
-  }
+export async function DELETE() {
+  await AuthService.deleteSession();
+  return NextResponse.json({ success: true });
 }

@@ -1,6 +1,6 @@
 "use client"
 import { FinancialAssistant } from "@/components/financial-assistant"
-import { FinancialInsights } from "@/components/financial-insights"
+import { FinancialInsights } from "@/features/analytics/components/financial-insights"
 
 export default function AssistantPage() {
   // Normalmente, você obteria o ID do usuário da sessão

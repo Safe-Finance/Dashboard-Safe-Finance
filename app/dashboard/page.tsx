@@ -1,10 +1,10 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { RealAccountsOverview } from "@/components/real-accounts-overview"
-import { RealTransactions } from "@/components/real-transactions"
-import { SavingsGoalsDashboard } from "@/components/savings-goals-dashboard"
-import { InvoicesDashboard } from "@/components/invoices-dashboard"
+import { RealAccountsOverview } from "@/features/accounts/components/real-accounts-overview"
+import { RealTransactions } from "@/features/transactions/components/real-transactions"
+import { SavingsGoalsDashboard } from "@/features/accounts/components/savings-goals-dashboard"
+import { InvoicesDashboard } from "@/features/transactions/components/invoices-dashboard"
 import { Skeleton } from "@/components/ui/skeleton"
 
 export default function DashboardPage() {

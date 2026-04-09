@@ -177,7 +177,7 @@ export function Sidebar({ className }: SidebarProps) {
       </div>
 
       <ScrollArea className="flex-1 px-3 py-4">
-        <nav className="space-y-2">
+        <nav aria-label="Main Navigation" className="space-y-2">
           {navigationItems.map((item) => {
             const isActive =
               pathname === item.url || (item.items && item.items.some((subItem) => pathname === subItem.url))

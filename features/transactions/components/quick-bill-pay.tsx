@@ -3,7 +3,7 @@
 import { useState, memo } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { PaymentModal } from "@/components/payment-modal"
+import { PaymentModal } from "@/features/transactions/components/payment-modal"
 import { useLocale } from "@/contexts/locale-context"
 
 interface Bill {

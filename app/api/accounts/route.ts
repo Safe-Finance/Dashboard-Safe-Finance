@@ -1,70 +1,44 @@
-import { NextResponse } from "next/server"
-import { db } from "@/lib/db"
-import { accounts, users } from "@/lib/schema"
-import { eq } from "drizzle-orm"
+import { NextResponse } from "next/server";
+import { AccountsService } from "@/features/accounts/services/accounts-service";
+import { AuthService } from "@/features/auth/services/auth-service";
 
 export async function GET(request: Request) {
   try {
-    const { searchParams } = new URL(request.url)
-    const userId = searchParams.get("userId")
-
-    if (!userId) {
-      return NextResponse.json({ error: "userId é obrigatório" }, { status: 400 })
+    const session = await AuthService.getSession();
+    if (!session) {
+      return NextResponse.json({ error: "Não autorizado" }, { status: 401 });
     }
 
-    // Verificar se o usuário existe
-    const userExists = await db
-      .select()
-      .from(users)
-      .where(eq(users.id, Number.parseInt(userId)))
-      .limit(1)
-
-    if (userExists.length === 0) {
-      return NextResponse.json({ error: "Usuário não encontrado" }, { status: 404 })
-    }
-
-    const result = await db
-      .select()
-      .from(accounts)
-      .where(eq(accounts.user_id, Number.parseInt(userId)))
-
-    return NextResponse.json({ accounts: result })
-  } catch (error) {
-    console.error("Erro ao buscar contas:", error)
-    return NextResponse.json({ error: "Erro ao buscar contas" }, { status: 500 })
+    const result = await AccountsService.getByUserId(session.userId);
+    return NextResponse.json({ accounts: result });
+  } catch (error: any) {
+    console.error("Fetch accounts error:", error);
+    return NextResponse.json(
+      { error: error.message || "Erro ao buscar contas" },
+      { status: 500 }
+    );
   }
 }
 
 export async function POST(request: Request) {
   try {
-    const body = await request.json()
-    const { user_id, name, type, balance, currency } = body
-
-    if (!user_id || !name || !type) {
-      return NextResponse.json({ error: "Campos obrigatórios faltando" }, { status: 400 })
+    const session = await AuthService.getSession();
+    if (!session) {
+      return NextResponse.json({ error: "Não autorizado" }, { status: 401 });
     }
 
-    // Verificar se o usuário existe
-    const userExists = await db.select().from(users).where(eq(users.id, user_id)).limit(1)
+    const body = await request.json();
+    const account = await AccountsService.create({
+      ...body,
+      user_id: session.userId,
+    });
 
-    if (userExists.length === 0) {
-      return NextResponse.json({ error: "Usuário não encontrado" }, { status: 404 })
-    }
-
-    const result = await db
-      .insert(accounts)
-      .values({
-        user_id,
-        name,
-        type,
-        balance: balance || 0,
-        currency: currency || "BRL",
-      })
-      .returning()
-
-    return NextResponse.json({ account: result[0] })
-  } catch (error) {
-    console.error("Erro ao criar conta:", error)
-    return NextResponse.json({ error: "Erro ao criar conta" }, { status: 500 })
+    return NextResponse.json({ account });
+  } catch (error: any) {
+    console.error("Create account error:", error);
+    return NextResponse.json(
+      { error: error.message || "Erro ao criar conta" },
+      { status: 500 }
+    );
   }
 }
