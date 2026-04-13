@@ -82,6 +82,8 @@ export default function HomePage() {
     show: { opacity: 1, y: 0, transition: springTransition }
   }
 
+  const userId = "k577xg84pjhwcwaxebmbesj43984s1pa";
+
   return (
     <div className="min-h-screen bg-background text-foreground overflow-hidden" data-tutorial="dashboard">
       <AccessibilityMode />
@@ -129,27 +131,27 @@ export default function HomePage() {
         <motion.div variants={itemVariants} className="md:col-start-2 md:col-span-11 relative z-20 border-l-4 border-primary pl-4 md:pl-12 my-10" data-tutorial="chart">
           <h2 className="font-mono text-xs uppercase tracking-widest text-primary mb-6">03 // Telemetry</h2>
           <div className="bg-card shadow-2xl overflow-hidden p-2">
-            <FinancialChart />
+            <FinancialChart userId={userId} />
           </div>
         </motion.div>
 
         {/* Layer 3: Split flow for Accounts & Transactions */}
         <motion.div variants={itemVariants} className="md:col-start-1 md:col-span-7 relative z-10" data-tutorial="accounts">
           <h2 className="font-mono text-xs uppercase tracking-widest text-primary mb-6">04 // Core Assets</h2>
-          <AccountsOverview />
+          <AccountsOverview userId={userId} />
         </motion.div>
 
         <motion.div variants={itemVariants} className="md:col-start-9 md:col-span-4 relative z-10" data-tutorial="transactions">
           <h2 className="font-mono text-xs uppercase tracking-widest text-primary mb-6">05 // Real-time Feed</h2>
-          <RecentTransactions />
+          <RecentTransactions userId={userId} />
         </motion.div>
         
         {/* Layer 4: Intelligence & Goals overlapping the center */}
         <motion.div variants={itemVariants} className="md:col-start-2 md:col-span-5 relative z-10 p-6 md:p-12 border-2 border-foreground/10 bg-foreground/5 backdrop-blur-md">
           <h2 className="font-mono text-xs uppercase tracking-widest text-primary mb-6">06 // Objectives</h2>
-          <SavingsGoals />
+          <SavingsGoals userId={userId} />
           <div className="mt-12">
-            <BudgetTracker />
+            <BudgetTracker userId={userId} />
           </div>
         </motion.div>
 

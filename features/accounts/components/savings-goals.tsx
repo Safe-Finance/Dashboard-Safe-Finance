@@ -1,20 +1,25 @@
-"use client"
-
+import { memo } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Progress } from "@/components/ui/progress"
 import { Button } from "@/components/ui/button"
 import { PlusCircle } from "lucide-react"
 import { useLocale } from "@/contexts/locale-context"
-import { memo } from "react"
+import { useQuery } from "convex/react"
+import { api } from "@/convex/_generated/api"
+import { Id } from "@/convex/_generated/dataModel"
 
-const savingsGoals = [
-  { name: "Fundo de Emergência", current: 10000, target: 25000 },
-  { name: "Férias", current: 3000, target: 5000 },
-  { name: "Carro Novo", current: 15000, target: 35000 },
-]
+interface SavingsGoalsProps {
+  userId: string
+}
 
-export const SavingsGoals = memo(function SavingsGoals() {
+export const SavingsGoals = memo(function SavingsGoals({ userId }: SavingsGoalsProps) {
   const { formatCurrency } = useLocale()
+  const goalsRaw = useQuery(api.savings_goals.list, {
+    userId: userId as Id<"users">,
+  })
+
+  const isLoading = goalsRaw === undefined
+  const goals = goalsRaw ?? []
 
   return (
     <Card>
@@ -27,21 +32,32 @@ export const SavingsGoals = memo(function SavingsGoals() {
       </CardHeader>
       <CardContent>
         <div className="space-y-4">
-          {savingsGoals.map((goal) => {
-            const percentage = (goal.current / goal.target) * 100
-            return (
-              <div key={goal.name} className="space-y-2">
-                <div className="flex justify-between text-sm">
-                  <span>{goal.name}</span>
-                  <span>
-                    {formatCurrency(goal.current)} / {formatCurrency(goal.target)}
-                  </span>
+          {isLoading ? (
+            <div className="space-y-4">
+              <div className="h-10 w-full animate-pulse bg-muted rounded"></div>
+              <div className="h-10 w-full animate-pulse bg-muted rounded"></div>
+            </div>
+          ) : goals.length === 0 ? (
+            <div className="flex items-center justify-center p-4 text-sm text-muted-foreground">
+              Nenhuma meta definida.
+            </div>
+          ) : (
+            goals.map((goal) => {
+              const percentage = (goal.current_amount / goal.target_amount) * 100
+              return (
+                <div key={goal._id} className="space-y-2">
+                  <div className="flex justify-between text-sm">
+                    <span>{goal.name}</span>
+                    <span>
+                      {formatCurrency(goal.current_amount)} / {formatCurrency(goal.target_amount)}
+                    </span>
+                  </div>
+                  <Progress value={percentage} className="h-2 bg-secondary [&>div]:bg-primary" />
+                  <p className="text-xs text-right text-muted-foreground">{percentage.toFixed(1)}% completo</p>
                 </div>
-                <Progress value={percentage} className="h-2 bg-secondary [&>div]:bg-primary" />
-                <p className="text-xs text-right text-muted-foreground">{percentage.toFixed(1)}% completo</p>
-              </div>
-            )
-          })}
+              )
+            })
+          )}
         </div>
       </CardContent>
     </Card>

@@ -1,78 +1,26 @@
 "use client"
 
-import { useEffect, useState, memo } from "react"
+import { memo } from "react"
 import { ArrowDownRight, ArrowUpRight } from "lucide-react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { useLocale } from "@/contexts/locale-context"
 import { motion } from "framer-motion"
+import { useQuery } from "convex/react"
+import { api } from "@/convex/_generated/api"
+import { Id } from "@/convex/_generated/dataModel"
 
-interface Transaction {
-  id: number
-  description: string
-  amount: number
-  date: string
-  type: "credit" | "debit"
+interface RecentTransactionsProps {
+  userId: string
 }
 
-const RecentTransactionsComponent = () => {
+const RecentTransactionsComponent = ({ userId }: RecentTransactionsProps) => {
   const { formatCurrency } = useLocale()
-  const [transactions, setTransactions] = useState<Transaction[]>([])
-  const [isLoading, setIsLoading] = useState(true)
+  const transactionsRaw = useQuery(api.transactions.list, {
+    userId: userId as Id<"users">,
+  })
 
-  useEffect(() => {
-    // Simulando uma chamada de API
-    const fetchTransactions = async () => {
-      setIsLoading(true)
-      try {
-        // Dados simulados
-        const mockTransactions: Transaction[] = [
-          {
-            id: 1,
-            description: "Supermercado Extra",
-            amount: 250.75,
-            date: "2023-04-25",
-            type: "debit",
-          },
-          {
-            id: 2,
-            description: "Salário",
-            amount: 5000.0,
-            date: "2023-04-20",
-            type: "credit",
-          },
-          {
-            id: 3,
-            description: "Netflix",
-            amount: 39.9,
-            date: "2023-04-18",
-            type: "debit",
-          },
-          {
-            id: 4,
-            description: "Transferência recebida",
-            amount: 1200.0,
-            date: "2023-04-15",
-            type: "credit",
-          },
-          {
-            id: 5,
-            description: "Restaurante",
-            amount: 89.9,
-            date: "2023-04-12",
-            type: "debit",
-          },
-        ]
-
-        setTransactions(mockTransactions)
-      } catch (error) {
-        console.error("Erro ao buscar transações:", error)
-      } finally {
-        setIsLoading(false)
-      }
-    }
-
-    fetchTransactions()
-  }, [])
+  const isLoading = transactionsRaw === undefined
+  const transactions = transactionsRaw ?? []
 
   const formatDate = (dateString: string) => {
     const date = new Date(dateString)
@@ -119,7 +67,7 @@ const RecentTransactionsComponent = () => {
         >
           {transactions.map((transaction) => (
             <motion.div 
-              key={transaction.id} 
+              key={transaction._id} 
               className="group/item flex flex-col sm:flex-row sm:items-center justify-between border border-border/20 p-4 bg-background/40 hover:bg-muted/10 transition-all duration-300"
               variants={{
                 hidden: { opacity: 0, x: -10 },
@@ -129,12 +77,12 @@ const RecentTransactionsComponent = () => {
               <div className="flex items-center gap-4 mb-2 sm:mb-0">
                 <div
                   className={`p-2 border backdrop-blur-sm ${
-                    transaction.type === "credit"
+                    transaction.type === "income" || transaction.type === "credit"
                       ? "border-primary/30 text-primary bg-primary/5"
                       : "border-destructive/30 text-destructive bg-destructive/5"
                   }`}
                 >
-                  {transaction.type === "credit" ? (
+                  {transaction.type === "income" || transaction.type === "credit" ? (
                     <ArrowUpRight className="h-4 w-4" />
                   ) : (
                     <ArrowDownRight className="h-4 w-4" />
@@ -145,8 +93,8 @@ const RecentTransactionsComponent = () => {
                   <div className="text-[10px] text-muted-foreground font-mono mt-1 opacity-70">{formatDate(transaction.date)}</div>
                 </div>
               </div>
-              <div className={`font-mono text-sm tracking-tight ${transaction.type === "credit" ? "text-primary drop-shadow-[0_0_8px_rgba(0,255,209,0.3)]" : "text-destructive drop-shadow-[0_0_8px_rgba(255,0,0,0.3)]"}`}>
-                {transaction.type === "credit" ? "+" : "-"}
+              <div className={`font-mono text-sm tracking-tight ${transaction.type === "income" || transaction.type === "credit" ? "text-primary drop-shadow-[0_0_8px_rgba(0,255,209,0.3)]" : "text-destructive drop-shadow-[0_0_8px_rgba(255,0,0,0.3)]"}`}>
+                {transaction.type === "income" || transaction.type === "credit" ? "+" : "-"}
                 {formatCurrency(transaction.amount)}
               </div>
             </motion.div>

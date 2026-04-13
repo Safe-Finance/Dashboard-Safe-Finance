@@ -7,6 +7,8 @@ export const list = query({
     category: v.optional(v.string()),
     type: v.optional(v.string()),
     limit: v.optional(v.number()),
+    startDate: v.optional(v.string()),
+    endDate: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
     let all = await ctx.db
@@ -23,6 +25,12 @@ export const list = query({
     }
     if (args.limit) {
       all = all.slice(0, args.limit);
+    }
+    if (args.startDate) {
+      all = all.filter((t) => t.date >= args.startDate!);
+    }
+    if (args.endDate) {
+      all = all.filter((t) => t.date <= args.endDate!);
     }
 
     // Fetch account names

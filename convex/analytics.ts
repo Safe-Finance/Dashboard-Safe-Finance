@@ -1,76 +1,52 @@
-import { v } from "convex/values"
-import { query } from "./_generated/server"
+import { v } from "convex/values";
+import { query } from "./_generated/server";
 
-export const getFinancialSummary = query({
+export const getChartData = query({
   args: {
     userId: v.id("users"),
-    startDate: v.optional(v.string()), // ISO date
-    endDate: v.optional(v.string()), // ISO date
+    months: v.number(),
   },
   handler: async (ctx, args) => {
-    const userAccounts = await ctx.db
-      .query("accounts")
+    const transactions = await ctx.db
+      .query("transactions")
       .withIndex("by_user", (q) => q.eq("user_id", args.userId))
-      .collect()
+      .collect();
 
-    const accountIds = userAccounts.map((a) => a._id)
+    // Group transactions by month and year
+    const grouped = new Map<string, { income: number; expenses: number }>();
 
-    let transactionsQuery = ctx.db.query("transactions")
-
-    const allTransactions = await transactionsQuery.collect()
-    
-    // Filter by account and date manually since we don't have a complex index yet
-    const filteredTransactions = allTransactions.filter(t => {
-      const isUserTransaction = t.account_id ? accountIds.includes(t.account_id) : false
-      const afterStart = args.startDate ? t.date >= args.startDate : true
-      const beforeEnd = args.endDate ? t.date <= args.endDate : true
-      return isUserTransaction && afterStart && beforeEnd
-    })
-
-    // Spending by Category
-    const categoryMap = new Map<string, number>()
-    let totalIncome = 0
-    let totalExpenses = 0
-
-    filteredTransactions.forEach((t) => {
-      const amount = Number(t.amount)
-      if (amount < 0) {
-        const absAmount = Math.abs(amount)
-        const category = t.category || "Outros"
-        categoryMap.set(category, (categoryMap.get(category) || 0) + absAmount)
-        totalExpenses += absAmount
-      } else {
-        totalIncome += amount
-      }
-    })
-
-    const spendingByCategory = Array.from(categoryMap.entries()).map(([category, total]) => ({
-      category,
-      total,
-    })).sort((a, b) => b.total - a.total)
-
-    // Top Expenses
-    const topExpenses = filteredTransactions
-      .filter((t) => Number(t.amount) < 0)
-      .sort((a, b) => Number(a.amount) - Number(b.amount)) // more negative first
-      .slice(0, 5)
-      .map((t) => ({
-        description: t.description,
-        amount: Math.abs(Number(t.amount)),
-        date: t.date,
-        category: t.category || "Outros",
-      }))
-
-    return {
-      spendingByCategory,
-      topExpenses,
-      incomeVsExpenses: {
-        income: totalIncome,
-        expenses: totalExpenses,
-      },
-      // Simplified for now, can add monthlyBalance and transactionTrends if needed
-      monthlyBalance: [],
-      transactionTrends: [],
+    // Get the last `args.months` months
+    const now = new Date();
+    const targetMonths: string[] = [];
+    for (let i = args.months - 1; i >= 0; i--) {
+      const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+      const monthStr = d.toLocaleString('en-US', { month: 'short' });
+      const year = d.getFullYear();
+      const key = `${monthStr} ${year}`;
+      targetMonths.push(key);
+      grouped.set(key, { income: 0, expenses: 0 });
     }
+
+    transactions.forEach((tx) => {
+      const txDate = new Date(tx.date);
+      const monthStr = txDate.toLocaleString('en-US', { month: 'short' });
+      const year = txDate.getFullYear();
+      const key = `${monthStr} ${year}`;
+
+      if (grouped.has(key)) {
+        const current = grouped.get(key)!;
+        if (tx.type === "income" || tx.type === "credit") {
+          current.income += Math.abs(tx.amount);
+        } else {
+          current.expenses += Math.abs(tx.amount);
+        }
+      }
+    });
+
+    return targetMonths.map((month) => ({
+      month: month.split(' ')[0], // We keep only the month name for the chart key
+      fullMonth: month,
+      ...grouped.get(month)!,
+    }));
   },
-})
+});

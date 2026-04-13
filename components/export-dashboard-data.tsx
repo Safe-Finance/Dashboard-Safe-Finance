@@ -1,7 +1,7 @@
 "use client"
 
 import { useState } from "react"
-import { useQuery } from "convex/react"
+import { useQuery, useConvex } from "convex/react"
 import { api } from "@/convex/_generated/api"
 import { Id } from "@/convex/_generated/dataModel"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
@@ -18,11 +18,11 @@ import { convertToCSV, downloadCSV, generateFileName } from "@/lib/export-utils"
 import { exportToPDF } from "@/lib/pdf-export"
 
 interface ExportDashboardDataProps {
-  userId: string | number
+  userId: string
 }
 
-
 export function ExportDashboardData({ userId }: ExportDashboardDataProps) {
+  const convex = useConvex()
   const [isLoading, setIsLoading] = useState(false)
   const [exportFormat, setExportFormat] = useState<"csv" | "pdf">("csv")
   const [date, setDate] = useState<DateRange | undefined>({
@@ -50,51 +50,45 @@ export function ExportDashboardData({ userId }: ExportDashboardDataProps) {
     setIsLoading(true)
 
     try {
+      const uId = userId as Id<"users">
       // Coletar dados selecionados
       const dataToExport: Record<string, any[]> = {}
 
       if (selectedData.transactions) {
-        const response = await fetch(
-          `/api/transactions?userId=${userId}&startDate=${date?.from?.toISOString()}&endDate=${date?.to?.toISOString()}`,
-        )
-        if (response.ok) {
-          const data = await response.json()
-          dataToExport.transactions = data.transactions
-        }
+        const data = await convex.query(api.transactions.list, {
+          userId: uId,
+          startDate: date?.from?.toISOString(),
+          endDate: date?.to?.toISOString(),
+        })
+        dataToExport.transactions = data
       }
 
       if (selectedData.accounts) {
-        const response = await fetch(`/api/accounts?userId=${userId}`)
-        if (response.ok) {
-          const data = await response.json()
-          dataToExport.accounts = data.accounts
-        }
+        const data = await convex.query(api.accounts.list, { userId: uId })
+        dataToExport.accounts = data
       }
 
       if (selectedData.budgets) {
-        const response = await fetch(
-          `/api/budgets?userId=${userId}&startDate=${date?.from?.toISOString()}&endDate=${date?.to?.toISOString()}`,
-        )
-        if (response.ok) {
-          const data = await response.json()
-          dataToExport.budgets = data
-        }
+        const data = await convex.query(api.budgets.list, {
+          userId: uId,
+          startDate: date?.from?.toISOString(),
+          endDate: date?.to?.toISOString(),
+        })
+        dataToExport.budgets = data
       }
 
       if (selectedData.goals) {
-        const response = await fetch(`/api/savings-goals?userId=${userId}`)
-        if (response.ok) {
-          const data = await response.json()
-          dataToExport.goals = data.goals
-        }
+        const data = await convex.query(api.savings_goals.list, { userId: uId })
+        dataToExport.goals = data
       }
 
       if (selectedData.invoices) {
-        const response = await fetch(`/api/invoices?userId=${userId}`)
-        if (response.ok) {
-          const data = await response.json()
-          dataToExport.invoices = data.invoices
-        }
+        const data = await convex.query(api.invoices.list, {
+          userId: uId,
+          startDate: date?.from?.toISOString(),
+          endDate: date?.to?.toISOString(),
+        })
+        dataToExport.invoices = data
       }
 
       // Exportar dados no formato selecionado

@@ -1,6 +1,9 @@
 "use client";
 
 import { useMemo } from "react";
+import { useQuery } from "convex/react";
+import { api } from "@/convex/_generated/api";
+import { Id } from "@/convex/_generated/dataModel";
 
 export interface BudgetCategory {
   name: string;
@@ -8,16 +11,21 @@ export interface BudgetCategory {
   budget: number;
 }
 
-const mockBudgetCategories: BudgetCategory[] = [
-  { name: "Housing", spent: 2000, budget: 2500 },
-  { name: "Transportation", spent: 450, budget: 500 },
-  { name: "Food", spent: 800, budget: 1000 },
-  { name: "Utilities", spent: 300, budget: 350 },
-  { name: "Entertainment", spent: 250, budget: 300 },
-];
+export function useBudgetData(userId: string) {
+  const budgetsRaw = useQuery(api.budgets.list, {
+    userId: userId as Id<"users">,
+  });
 
-export function useBudgetData() {
-  const budgetCategories = useMemo(() => mockBudgetCategories, []);
+  const isLoading = budgetsRaw === undefined;
+  const budgets = budgetsRaw ?? [];
+
+  const budgetCategories: BudgetCategory[] = useMemo(() => {
+    return budgets.map((b) => ({
+      name: b.category,
+      spent: b.spent_amount,
+      budget: b.amount,
+    }));
+  }, [budgets]);
 
   const totalBudget = useMemo(
     () => budgetCategories.reduce((sum, category) => sum + category.budget, 0),
@@ -30,9 +38,9 @@ export function useBudgetData() {
   );
 
   const overallPercentage = useMemo(
-    () => (totalSpent / totalBudget) * 100,
+    () => (totalBudget > 0 ? (totalSpent / totalBudget) * 100 : 0),
     [totalSpent, totalBudget],
   );
 
-  return { budgetCategories, totalBudget, totalSpent, overallPercentage, isLoading: false };
+  return { budgetCategories, totalBudget, totalSpent, overallPercentage, isLoading };
 }

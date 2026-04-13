@@ -1,62 +1,34 @@
 "use client"
 
-import { useEffect, useState, memo } from "react"
+import { memo } from "react"
+import { ArrowDownRight, ArrowUpRight } from "lucide-react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { useLocale } from "@/contexts/locale-context"
 import { motion } from "framer-motion"
+import { useQuery } from "convex/react"
+import { api } from "@/convex/_generated/api"
+import { Id } from "@/convex/_generated/dataModel"
 
 interface Account {
-  id: number
+  _id: string
   name: string
   balance: number
   type: string
 }
 
-const AccountsOverviewComponent = () => {
+interface AccountsOverviewProps {
+  userId: string
+}
+
+const AccountsOverviewComponent = ({ userId }: AccountsOverviewProps) => {
   const { formatCurrency } = useLocale()
-  const [accounts, setAccounts] = useState<Account[]>([])
-  const [isLoading, setIsLoading] = useState(true)
-  const [totalBalance, setTotalBalance] = useState(0)
+  const accountsRaw = useQuery(api.accounts.list, {
+    userId: userId as Id<"users">,
+  })
 
-  useEffect(() => {
-    // Simulando uma chamada de API
-    const fetchAccounts = async () => {
-      setIsLoading(true)
-      try {
-        // Dados simulados
-        const mockAccounts: Account[] = [
-          {
-            id: 1,
-            name: "Conta Corrente",
-            balance: 12500.75,
-            type: "checking",
-          },
-          {
-            id: 2,
-            name: "Poupança",
-            balance: 45000.32,
-            type: "savings",
-          },
-          {
-            id: 3,
-            name: "Investimentos",
-            balance: 78900.45,
-            type: "investment",
-          },
-        ]
-
-        setAccounts(mockAccounts)
-        const total = mockAccounts.reduce((sum, account) => sum + account.balance, 0)
-        setTotalBalance(total)
-      } catch (error) {
-        console.error("Erro ao buscar contas:", error)
-      } finally {
-        setIsLoading(false)
-      }
-    }
-
-    fetchAccounts()
-  }, [])
+  const isLoading = accountsRaw === undefined
+  const accounts = accountsRaw ?? []
+  const totalBalance = accounts.reduce((sum, account) => sum + account.balance, 0)
 
   if (isLoading) {
     return (
@@ -114,7 +86,7 @@ const AccountsOverviewComponent = () => {
           >
             {accounts.map((account) => (
               <motion.div 
-                key={account.id} 
+                key={account._id} 
                 className="flex items-center justify-between border border-border/20 p-4 bg-background/40 hover:bg-muted/10 transition-all duration-300 hover:border-primary/30"
                 variants={{
                   hidden: { opacity: 0, x: -10 },

@@ -1,11 +1,12 @@
-"use client"
-
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis, CartesianGrid } from "recharts"
-import { useTheme } from "next-themes"
-import { useLocale } from "@/contexts/locale-context"
+import { useQuery } from "convex/react"
+import { api } from "@/convex/_generated/api"
+import { Id } from "@/convex/_generated/dataModel"
 import { useMemo } from "react"
 import { motion } from "framer-motion"
+import { useTheme } from "next-themes"
+import { useLocale } from "@/contexts/locale-context"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis, CartesianGrid } from "recharts"
 
 const monthsInPortuguese = {
   Jan: "Jan",
@@ -22,27 +23,25 @@ const monthsInPortuguese = {
   Dec: "Dez",
 }
 
-const rawData = [
-  { month: "Jan", income: 2000, expenses: 1800 },
-  { month: "Feb", income: 2200, expenses: 1900 },
-  { month: "Mar", income: 2400, expenses: 2000 },
-  { month: "Apr", income: 2600, expenses: 2200 },
-  { month: "May", income: 2800, expenses: 2400 },
-  { month: "Jun", income: 3000, expenses: 2600 },
-]
-
-export function FinancialChart() {
+export function FinancialChart({ userId }: { userId: string }) {
   const { theme } = useTheme()
   const { formatCurrency } = useLocale()
 
+  const rawData = useQuery(api.analytics.getChartData, {
+    userId: userId as Id<"users">,
+    months: 6,
+  });
+
+  const isLoading = rawData === undefined;
+  
   // Memoize translated data
   const data = useMemo(
     () =>
-      rawData.map((item) => ({
+      (rawData ?? []).map((item) => ({
         ...item,
-        monthPt: monthsInPortuguese[item.month as keyof typeof monthsInPortuguese],
+        monthPt: monthsInPortuguese[item.month as keyof typeof monthsInPortuguese] || item.month,
       })),
-    [],
+    [rawData],
   )
 
   // Custom tooltip component
@@ -64,6 +63,14 @@ export function FinancialChart() {
       )
     }
     return null
+  }
+
+  if (isLoading) {
+    return (
+      <Card className="rounded-none border border-border/50 bg-background/80 backdrop-blur-md h-full flex items-center justify-center">
+        <div className="font-mono text-xs uppercase animate-pulse">Carregando dados...</div>
+      </Card>
+    );
   }
 
   return (

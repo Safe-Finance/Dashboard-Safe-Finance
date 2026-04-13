@@ -4,22 +4,31 @@ import { v } from "convex/values";
 export const list = query({
   args: {
     userId: v.id("users"),
-    status: v.optional(v.string())
+    status: v.optional(v.string()),
+    startDate: v.optional(v.string()),
+    endDate: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
-    let q = ctx.db.query("invoices").withIndex("by_user", q => q.eq("user_id", args.userId));
-    
-    const invoices = await q.collect();
-    let filtered = invoices;
+    let q = ctx.db.query("invoices").withIndex("by_user", (q) => q.eq("user_id", args.userId))
+
+    const invoices = await q.collect()
+    let filtered = invoices
     if (args.status && args.status !== "all") {
-      filtered = invoices.filter(inv => inv.status === args.status);
+      filtered = invoices.filter((inv) => inv.status === args.status)
     }
-    
-    // Order por due_date (usamos JS aqui pois due_date é string no nosso esquema, não é possível index order default)
-    filtered.sort((a, b) => new Date(b.due_date).getTime() - new Date(a.due_date).getTime());
-    
-    return filtered;
-  }
+
+    if (args.startDate) {
+      filtered = filtered.filter((inv) => inv.issue_date >= args.startDate!)
+    }
+    if (args.endDate) {
+      filtered = filtered.filter((inv) => inv.issue_date <= args.endDate!)
+    }
+
+    // Order por due_date
+    filtered.sort((a, b) => new Date(b.due_date).getTime() - new Date(a.due_date).getTime())
+
+    return filtered
+  },
 });
 
 export const add = mutation({

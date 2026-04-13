@@ -3,8 +3,8 @@
 import { useBudgetData } from "../hooks/use-budget-data";
 import { BudgetTrackerView } from "./budget-tracker-view";
 
-export function BudgetTracker() {
-  const { budgetCategories, totalBudget, totalSpent, overallPercentage, isLoading } = useBudgetData();
+export function BudgetTracker({ userId }: { userId: string }) {
+  const { budgetCategories, totalBudget, totalSpent, overallPercentage, isLoading } = useBudgetData(userId);
 
   return (
     <BudgetTrackerView 
