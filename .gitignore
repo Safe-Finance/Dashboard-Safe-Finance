@@ -25,3 +25,30 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+tsc*.txt
+
+# agents
+.agents/
+.claude/
+.codebuddy/
+.continue/
+.roo/
+.windsurf/
+.trae/
+.goose/
+.junie/
+.kilocode/
+.kiro/
+.kode/
+.mcpjam/
+.mux/
+.neovate/
+.openhands/
+.pi/
+.pochi/
+.qoder/
+.qwen/
+.zencoder/
+.crush/
+.factory/
+.commandcode/
