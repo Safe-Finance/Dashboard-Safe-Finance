@@ -2,12 +2,12 @@ import type React from "react"
 import type { Metadata } from "next"
 import { Inter } from "next/font/google"
 import "./globals.css"
-import { ThemeProvider } from "@/components/theme-provider"
-import { Toaster } from "@/components/ui/sonner"
-import { SettingsProvider } from "@/contexts/settings-context"
-import { LocaleProvider } from "@/contexts/locale-context"
-import Layout from "@/components/layout"
-import { PWAInstallButton } from "@/components/pwa/install-button"
+import { ThemeProvider } from "@/shared/ui/theme-provider"
+import { Toaster } from "@/shared/ui/sonner"
+import { SettingsProvider } from "@/shared/contexts/settings-context"
+import { LocaleProvider } from "@/shared/contexts/locale-context"
+import Layout from "@/shared/ui/layout"
+import { PWAInstallButton } from "@/features/pwa/components/install-button"
 
 const inter = Inter({ subsets: ["latin"] })
 
@@ -84,7 +84,7 @@ export const metadata: Metadata = {
     generator: 'v0.app'
 }
 
-import { ConvexClientProvider } from "@/components/convex-client-provider"
+import { ConvexClientProvider } from "@/app/providers/convex-client-provider"
 
 export default function RootLayout({
   children,
