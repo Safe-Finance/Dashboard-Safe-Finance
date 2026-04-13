@@ -4,8 +4,8 @@ import { Id } from "@/convex/_generated/dataModel"
 import { useMemo } from "react"
 import { motion } from "framer-motion"
 import { useTheme } from "next-themes"
-import { useLocale } from "@/contexts/locale-context"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { useLocale } from "@/shared/contexts/locale-context"
+import { Card, CardContent, CardHeader, CardTitle } from "@/shared/ui/card"
 import { Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis, CartesianGrid } from "recharts"
 
 const monthsInPortuguese = {

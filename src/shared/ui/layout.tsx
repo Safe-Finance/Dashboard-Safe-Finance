@@ -1,9 +1,9 @@
 "use client"
 
 import type React from "react"
-import { Sidebar } from "./sidebar"
-import { TopNav } from "./top-nav"
-import { useMediaQuery } from "@/hooks/use-media-query"
+import { Sidebar } from "@/widgets/sidebar/sidebar"
+import { TopNav } from "@/widgets/top-nav/top-nav"
+import { useMediaQuery } from "@/shared/hooks/use-media-query"
 
 export default function Layout({ children }: { children: React.ReactNode }) {
   const isMobile = useMediaQuery("(max-width: 768px)")

@@ -27,10 +27,10 @@ import {
   ChevronDown,
   ChevronRight,
 } from "lucide-react"
-import { cn } from "@/lib/utils"
-import { Button } from "@/components/ui/button"
-import { ScrollArea } from "@/components/ui/scroll-area"
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible"
+import { cn } from "@/shared/lib/utils"
+import { Button } from "@/shared/ui/button"
+import { ScrollArea } from "@/shared/ui/scroll-area"
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/shared/ui/collapsible"
 
 interface SidebarProps {
   className?: string
