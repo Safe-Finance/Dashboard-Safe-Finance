@@ -2,18 +2,18 @@
 
 import { useState } from "react"
 import { useQuery } from "convex/react"
-import { api } from "../../convex/_generated/api"
+import { api } from "@/convex/_generated/api"
+import { Id } from "@/convex/_generated/dataModel"
 import { RealAccountsOverview } from "@/features/accounts/components/real-accounts-overview"
 import { RealTransactions } from "@/features/transactions/components/real-transactions"
 import { SavingsGoalsDashboard } from "@/features/accounts/components/savings-goals-dashboard"
 import { InvoicesDashboard } from "@/features/transactions/components/invoices-dashboard"
 import { Skeleton } from "@/components/ui/skeleton"
-import { Id } from "../../convex/_generated/dataModel"
 
 export default function DashboardPage() {
   // Normalmente, você obteria o ID do usuário da sessão
   // Para este exemplo, usaremos um ID fixo — será substituído pela integração de Auth
-  const userId = 1 as unknown as Id<"users">
+  const userId = "k577xg84pjhwcwaxebmbesj43984s1pa" as Id<"users">
 
   const accountsRaw = useQuery(api.accounts.list, { userId })
   const isLoading = accountsRaw === undefined

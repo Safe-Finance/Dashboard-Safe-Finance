@@ -11,8 +11,8 @@ import { ExportDataButton } from "@/components/export-data-button"
 import { exportToPDF } from "@/lib/pdf-export"
 
 import { useQuery } from "convex/react"
-import { api } from "../../convex/_generated/api"
-import { Id } from "../../convex/_generated/dataModel"
+import { api } from "@/convex/_generated/api"
+import { Id } from "@/convex/_generated/dataModel"
 
 interface Invoice {
   id: string | number

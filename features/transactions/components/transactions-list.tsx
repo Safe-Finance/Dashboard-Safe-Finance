@@ -2,7 +2,7 @@
 
 import { memo } from "react";
 import { ArrowDownRight, ArrowUpRight } from "lucide-react";
-import { Card, CardContent, CardHeader, CardTitle } from "@repo/ui";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui";
 import { useLocale } from "@/contexts/locale-context";
 import { motion } from "framer-motion";
 import { type Transaction } from "../hooks/use-transactions";

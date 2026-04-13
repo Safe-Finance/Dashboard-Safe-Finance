@@ -1,7 +1,7 @@
 "use client";
 
 import { memo } from "react";
-import { Card, CardContent, CardHeader, CardTitle, Progress } from "@repo/ui";
+import { Card, CardContent, CardHeader, CardTitle, Progress } from "@/components/ui";
 import { useLocale } from "@/contexts/locale-context";
 import { motion } from "framer-motion";
 import { type BudgetCategory } from "../hooks/use-budget-data";

@@ -7,8 +7,8 @@ import { Skeleton } from "@/components/ui/skeleton"
 import { AlertCircle, AlertTriangle } from "lucide-react"
 
 import { useQuery } from "convex/react"
-import { api } from "../../../convex/_generated/api"
-import { Id } from "../../../convex/_generated/dataModel"
+import { api } from "@/convex/_generated/api"
+import { Id } from "@/convex/_generated/dataModel"
 
 interface Budget {
   id: string | number

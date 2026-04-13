@@ -2,7 +2,7 @@
 
 import { memo } from "react";
 import { PlusCircle } from "lucide-react";
-import { Card, CardContent, CardHeader, CardTitle, Progress, Button } from "@repo/ui";
+import { Card, CardContent, CardHeader, CardTitle, Progress, Button } from "@/components/ui";
 import { useLocale } from "@/contexts/locale-context";
 import { type SavingsGoal } from "../hooks/use-savings-goals";
 

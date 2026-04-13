@@ -1,7 +1,7 @@
 "use client";
 
 import { memo } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@repo/ui";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui";
 import { Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis, CartesianGrid } from "recharts";
 import { useLocale } from "@/contexts/locale-context";
 import { motion } from "framer-motion";

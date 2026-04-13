@@ -2,7 +2,7 @@
 
 import { memo } from "react";
 import { motion } from "framer-motion";
-import { Card, CardContent, CardHeader, CardTitle } from "@repo/ui";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui";
 import { useLocale } from "@/contexts/locale-context";
 import { type Account } from "../hooks/use-accounts";
 
