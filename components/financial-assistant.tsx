@@ -7,7 +7,7 @@ import { Textarea } from "@/components/ui/textarea"
 import { Send, Bot, Loader2 } from "lucide-react"
 
 interface FinancialAssistantProps {
-  userId: number
+  userId: string
 }
 
 interface Message {

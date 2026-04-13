@@ -34,7 +34,7 @@ interface Forecast {
 }
 
 interface FinancialForecastProps {
-  userId: string | number
+  userId: string
 }
 
 export function FinancialForecast({ userId }: FinancialForecastProps) {

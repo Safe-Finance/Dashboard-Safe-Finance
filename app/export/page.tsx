@@ -3,7 +3,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 
 export default function ExportPage() {
   // Normalmente, este ID viria da sessão do usuário autenticado
-  const userId = 1
+  const userId = "k577xg84pjhwcwaxebmbesj43984s1pa"
 
   return (
     <div className="container mx-auto py-6 space-y-6">

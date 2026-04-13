@@ -1,70 +1,84 @@
+"use client"
+
 import { Suspense } from "react"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { ArrowUpRight, ArrowDownRight } from "lucide-react"
 
-const transactions = [
-  { id: 1, name: "Amazon.com", amount: -129.99, date: "2023-07-15", type: "expense" },
-  { id: 2, name: "Mercado Pão de Açúcar", amount: -89.72, date: "2023-07-10", type: "expense" },
-  { id: 3, name: "Assinatura Netflix", amount: -15.99, date: "2023-07-05", type: "expense" },
-  { id: 4, name: "Pagamento Freelance", amount: 750, date: "2023-07-12", type: "income" },
-  { id: 5, name: "Posto de Gasolina", amount: -45.5, date: "2023-07-18", type: "expense" },
-  { id: 6, name: "Transferência Bancária", amount: 1200, date: "2023-07-20", type: "income" },
-  { id: 7, name: "Restaurante Sabor & Arte", amount: -78.5, date: "2023-07-22", type: "expense" },
-  { id: 8, name: "Farmácia São Paulo", amount: -32.75, date: "2023-07-25", type: "expense" },
-]
+import { useQuery } from "convex/react"
+import { api } from "@/convex/_generated/api"
+import { Id } from "@/convex/_generated/dataModel"
 
-function TransactionsTable() {
+function TransactionsTable({ userId }: { userId: Id<"users"> }) {
+  const transactions = useQuery(api.transactions.list, { userId })
+
+  if (transactions === undefined) {
+    return <Skeleton className="w-full h-[300px]" />
+  }
+
+  if (transactions.length === 0) {
+    return <div className="text-center py-8 text-muted-foreground">Nenhuma transação encontrada.</div>
+  }
+
   return (
     <Table>
       <TableHeader>
         <TableRow>
           <TableHead>Data</TableHead>
           <TableHead>Descrição</TableHead>
+          <TableHead>Conta</TableHead>
           <TableHead>Valor</TableHead>
           <TableHead>Tipo</TableHead>
         </TableRow>
       </TableHeader>
       <TableBody>
-        {transactions.map((transaction) => (
-          <TableRow key={transaction.id}>
-            <TableCell>{transaction.date}</TableCell>
-            <TableCell>{transaction.name}</TableCell>
-            <TableCell>
-              <div className="flex items-center">
+        {transactions.map((transaction) => {
+          const isIncome = transaction.type === "income" || transaction.type === "credit" || transaction.type === "receita"
+          return (
+            <TableRow key={transaction._id}>
+              <TableCell>
+                {new Date(transaction.date).toLocaleDateString("pt-BR")}
+              </TableCell>
+              <TableCell>{transaction.description}</TableCell>
+              <TableCell>{transaction.accountName || "N/A"}</TableCell>
+              <TableCell>
+                <div className="flex items-center">
+                  <span
+                    className={`font-medium ${
+                      isIncome ? "text-primary" : "text-red-600 dark:text-red-400"
+                    }`}
+                  >
+                    {isIncome ? "+" : "-"}
+                    R$ {Math.abs(transaction.amount).toFixed(2).replace(".", ",")}
+                  </span>
+                  {isIncome ? (
+                    <ArrowUpRight className="h-4 w-4 text-primary ml-1" />
+                  ) : (
+                    <ArrowDownRight className="h-4 w-4 text-red-600 dark:text-red-400 ml-1" />
+                  )}
+                </div>
+              </TableCell>
+              <TableCell>
                 <span
-                  className={`font-medium ${
-                    transaction.type === "income" ? "text-primary" : "text-red-600 dark:text-red-400"
+                  className={`px-2 py-1 rounded-full text-xs ${
+                    isIncome ? "bg-primary/20 text-primary" : "bg-red-500/20 text-red-500"
                   }`}
                 >
-                  {transaction.type === "income" ? "+" : "-"}
-                  R$ {Math.abs(transaction.amount).toFixed(2).replace(".", ",")}
+                  {isIncome ? "Receita" : "Despesa"}
                 </span>
-                {transaction.type === "income" ? (
-                  <ArrowUpRight className="h-4 w-4 text-primary ml-1" />
-                ) : (
-                  <ArrowDownRight className="h-4 w-4 text-red-600 dark:text-red-400 ml-1" />
-                )}
-              </div>
-            </TableCell>
-            <TableCell>
-              <span
-                className={`px-2 py-1 rounded-full text-xs ${
-                  transaction.type === "income" ? "bg-primary/20 text-primary" : "bg-red-500/20 text-red-500"
-                }`}
-              >
-                {transaction.type === "income" ? "Receita" : "Despesa"}
-              </span>
-            </TableCell>
-          </TableRow>
-        ))}
+              </TableCell>
+            </TableRow>
+          )
+        })}
       </TableBody>
     </Table>
   )
 }
 
 export default function TransactionsPage() {
+  const userId = "k577xg84pjhwcwaxebmbesj43984s1pa" as Id<"users">
+
   return (
     <div className="space-y-6">
       <h1 className="text-3xl font-bold tracking-tight">Transações</h1>
@@ -75,7 +89,7 @@ export default function TransactionsPage() {
             <CardTitle>Histórico de Transações</CardTitle>
           </CardHeader>
           <CardContent>
-            <TransactionsTable />
+            <TransactionsTable userId={userId} />
           </CardContent>
         </Card>
       </Suspense>

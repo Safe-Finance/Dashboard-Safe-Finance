@@ -37,7 +37,7 @@ interface Budget {
 }
 
 interface BudgetManagerProps {
-  userId: string | number
+  userId: string
 }
 
 export function BudgetManager({ userId }: BudgetManagerProps) {

@@ -7,7 +7,7 @@ import { FinancialForecast } from "@/components/forecasts/financial-forecast"
 export default function BudgetForecastPage() {
   // Normalmente, você obteria o ID do usuário da sessão
   // Para este exemplo, usaremos um ID fixo
-  const userId = 1
+  const userId = "k577xg84pjhwcwaxebmbesj43984s1pa"
 
   return (
     <div className="space-y-6">

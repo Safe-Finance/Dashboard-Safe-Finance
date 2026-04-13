@@ -29,7 +29,7 @@ interface Transaction {
 }
 
 interface BudgetProgressProps {
-  userId: string | number
+  userId: string
 }
 
 export function BudgetProgress({ userId }: BudgetProgressProps) {
@@ -71,7 +71,7 @@ export function BudgetProgress({ userId }: BudgetProgressProps) {
             description: t.description,
             amount: t.amount,
             type: t.type,
-            category: t.category,
+            category: t.category ?? "Geral",
             date: t.date,
           }));
 

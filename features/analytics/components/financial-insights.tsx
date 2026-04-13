@@ -16,7 +16,7 @@ interface Insight {
 }
 
 interface FinancialInsightsProps {
-  userId: string | number
+  userId: string
 }
 
 export function FinancialInsights({ userId }: FinancialInsightsProps) {

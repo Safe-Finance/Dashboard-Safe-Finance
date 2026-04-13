@@ -49,3 +49,12 @@ export const contribute = mutation({
     });
   }
 });
+
+export const remove = mutation({
+  args: {
+    goalId: v.id("savings_goals")
+  },
+  handler: async (ctx, args) => {
+    return await ctx.db.delete(args.goalId);
+  }
+});

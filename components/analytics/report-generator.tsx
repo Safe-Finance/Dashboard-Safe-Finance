@@ -12,7 +12,7 @@ import { addDays, format } from "date-fns"
 import { Download, Loader2 } from "lucide-react"
 
 interface ReportGeneratorProps {
-  userId: number
+  userId: string
 }
 
 export function ReportGenerator({ userId }: ReportGeneratorProps) {

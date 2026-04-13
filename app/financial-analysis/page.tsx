@@ -13,50 +13,32 @@ import { ReportGenerator } from "@/components/analytics/report-generator"
 import { addDays, format } from "date-fns"
 import type { DateRange } from "react-day-picker"
 
+import { useQuery } from "convex/react"
+import { api } from "@/convex/_generated/api"
+import { Id } from "@/convex/_generated/dataModel"
+
 export default function FinancialAnalysisPage() {
-  // Normalmente, você obteria o ID do usuário da sessão
-  // Para este exemplo, usaremos um ID fixo
-  const userId = 1
-  const [isLoading, setIsLoading] = useState(true)
-  const [analyticsData, setAnalyticsData] = useState<any>({
-    spendingByCategory: [],
-    monthlyBalance: [],
-    transactionTrends: [],
-    topExpenses: [],
-    incomeVsExpenses: { income: 0, expenses: 0 },
-  })
+  const userId = "k577xg84pjhwcwaxebmbesj43984s1pa"
 
   const [date, setDate] = useState<DateRange | undefined>({
     from: addDays(new Date(), -180), // Últimos 6 meses
     to: new Date(),
   })
 
-  useEffect(() => {
-    const fetchAnalytics = async () => {
-      setIsLoading(true)
-      try {
-        const startDate = date?.from ? format(date.from, "yyyy-MM-dd") : undefined
-        const endDate = date?.to ? format(date.to, "yyyy-MM-dd") : undefined
+  const analyticsRaw = useQuery(api.analytics.getFinancialSummary, {
+    userId: userId as Id<"users">,
+    startDate: date?.from ? date.from.toISOString() : undefined,
+    endDate: date?.to ? date.to.toISOString() : undefined,
+  })
 
-        const response = await fetch(
-          `/api/analytics?userId=${userId}${startDate ? `&startDate=${startDate}` : ""}${endDate ? `&endDate=${endDate}` : ""}`,
-        )
-
-        if (!response.ok) {
-          throw new Error("Erro ao buscar análises")
-        }
-
-        const data = await response.json()
-        setAnalyticsData(data)
-      } catch (error) {
-        console.error("Erro:", error)
-      } finally {
-        setIsLoading(false)
-      }
-    }
-
-    fetchAnalytics()
-  }, [userId, date])
+  const isLoading = analyticsRaw === undefined
+  const analyticsData = analyticsRaw ?? {
+    spendingByCategory: [],
+    monthlyBalance: [],
+    transactionTrends: [],
+    topExpenses: [],
+    incomeVsExpenses: { income: 0, expenses: 0 },
+  }
 
   return (
     <div className="space-y-6">

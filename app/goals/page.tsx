@@ -11,48 +11,22 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Target, Plus, Trash2, Edit, CheckCircle2 } from "lucide-react"
 import { toast } from "sonner"
 
-type Goal = {
-  id: string
-  title: string
-  targetAmount: number
-  currentAmount: number
-  category: string
-  deadline: string
-  description: string
-}
+import { useQuery, useMutation } from "convex/react"
+import { api } from "@/convex/_generated/api"
+import { Id } from "@/convex/_generated/dataModel"
 
 export default function GoalsPage() {
-  const [goals, setGoals] = useState<Goal[]>([
-    {
-      id: "1",
-      title: "Fundo de Emergência",
-      targetAmount: 10000,
-      currentAmount: 5000,
-      category: "Economia",
-      deadline: "2023-12-31",
-      description: "Guardar dinheiro para emergências",
-    },
-    {
-      id: "2",
-      title: "Férias",
-      targetAmount: 5000,
-      currentAmount: 2500,
-      category: "Lazer",
-      deadline: "2023-10-15",
-      description: "Viagem para a praia",
-    },
-    {
-      id: "3",
-      title: "Novo Notebook",
-      targetAmount: 7000,
-      currentAmount: 3500,
-      category: "Tecnologia",
-      deadline: "2023-11-30",
-      description: "Comprar um notebook novo para trabalho",
-    },
-  ])
+  const userId = "k577xg84pjhwcwaxebmbesj43984s1pa" as Id<"users">
+  
+  const goalsRaw = useQuery(api.savings_goals.list, { userId })
+  const addGoal = useMutation(api.savings_goals.add)
+  const contributeMutation = useMutation(api.savings_goals.contribute)
+  const removeGoal = useMutation(api.savings_goals.remove)
 
-  const [newGoal, setNewGoal] = useState<Omit<Goal, "id">>({
+  const isLoading = goalsRaw === undefined
+  const goals = goalsRaw ?? []
+
+  const [newGoal, setNewGoal] = useState({
     title: "",
     targetAmount: 0,
     currentAmount: 0,
@@ -61,49 +35,58 @@ export default function GoalsPage() {
     description: "",
   })
 
-  const handleAddGoal = () => {
+  const handleAddGoal = async () => {
     if (!newGoal.title || !newGoal.targetAmount || !newGoal.category || !newGoal.deadline) {
       toast.error("Por favor, preencha todos os campos obrigatórios")
       return
     }
 
-    const goal: Goal = {
-      ...newGoal,
-      id: Date.now().toString(),
+    try {
+      await addGoal({
+        userId,
+        name: newGoal.title,
+        target_amount: newGoal.targetAmount,
+        current_amount: newGoal.currentAmount,
+        target_date: newGoal.deadline,
+      })
+
+      setNewGoal({
+        title: "",
+        targetAmount: 0,
+        currentAmount: 0,
+        category: "",
+        deadline: "",
+        description: "",
+      })
+
+      toast.success("Meta adicionada com sucesso!")
+    } catch (error) {
+      console.error("Erro ao adicionar meta:", error)
+      toast.error("Erro ao adicionar meta")
     }
-
-    setGoals([...goals, goal])
-    setNewGoal({
-      title: "",
-      targetAmount: 0,
-      currentAmount: 0,
-      category: "",
-      deadline: "",
-      description: "",
-    })
-
-    toast.success("Meta adicionada com sucesso!")
   }
 
-  const handleDeleteGoal = (id: string) => {
-    setGoals(goals.filter((goal) => goal.id !== id))
-    toast.success("Meta removida com sucesso!")
+  const handleDeleteGoal = async (id: string) => {
+    try {
+      await removeGoal({ goalId: id as Id<"savings_goals"> })
+      toast.success("Meta removida com sucesso!")
+    } catch (error) {
+      console.error("Erro ao remover meta:", error)
+      toast.error("Erro ao remover meta")
+    }
   }
 
-  const handleUpdateProgress = (id: string, amount: number) => {
-    setGoals(
-      goals.map((goal) => {
-        if (goal.id === id) {
-          const newAmount = goal.currentAmount + amount
-          return {
-            ...goal,
-            currentAmount: newAmount > goal.targetAmount ? goal.targetAmount : newAmount,
-          }
-        }
-        return goal
-      }),
-    )
-    toast.success("Progresso atualizado com sucesso!")
+  const handleUpdateProgress = async (id: string, amount: number) => {
+    try {
+      await contributeMutation({
+        goalId: id as Id<"savings_goals">,
+        amount: amount,
+      })
+      toast.success("Progresso atualizado com sucesso!")
+    } catch (error) {
+      console.error("Erro ao atualizar progresso:", error)
+      toast.error("Erro ao atualizar progresso")
+    }
   }
 
   const calculateProgress = (current: number, target: number) => {
@@ -139,18 +122,18 @@ export default function GoalsPage() {
         <TabsContent value="active" className="space-y-4">
           <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
             {goals.map((goal) => (
-              <Card key={goal.id}>
+              <Card key={goal._id}>
                 <CardHeader className="pb-2">
                   <div className="flex justify-between items-start">
                     <div>
                       <CardTitle className="flex items-center">
                         <Target className="h-4 w-4 mr-2 text-primary" />
-                        {goal.title}
+                        {goal.name}
                       </CardTitle>
-                      <CardDescription>{goal.category}</CardDescription>
+                      <CardDescription>Meta Financeira</CardDescription>
                     </div>
                     <div className="flex space-x-1">
-                      <Button variant="ghost" size="icon" onClick={() => handleDeleteGoal(goal.id)}>
+                      <Button variant="ghost" size="icon" onClick={() => handleDeleteGoal(goal._id)}>
                         <Trash2 className="h-4 w-4" />
                       </Button>
                       <Button variant="ghost" size="icon">
@@ -163,24 +146,23 @@ export default function GoalsPage() {
                   <div className="space-y-2">
                     <div className="flex justify-between text-sm">
                       <span>Progresso:</span>
-                      <span className="font-medium">{calculateProgress(goal.currentAmount, goal.targetAmount)}%</span>
+                      <span className="font-medium">{calculateProgress(goal.current_amount, goal.target_amount)}%</span>
                     </div>
-                    <Progress value={calculateProgress(goal.currentAmount, goal.targetAmount)} className="h-2" />
+                    <Progress value={calculateProgress(goal.current_amount, goal.target_amount)} className="h-2" />
                     <div className="flex justify-between text-sm pt-1">
-                      <span>{formatCurrency(goal.currentAmount)}</span>
-                      <span>{formatCurrency(goal.targetAmount)}</span>
+                      <span>{formatCurrency(goal.current_amount)}</span>
+                      <span>{formatCurrency(goal.target_amount)}</span>
                     </div>
                     <div className="text-sm text-muted-foreground">
                       <span>Data limite: </span>
                       <span>
-                        {new Date(goal.deadline).toLocaleDateString("pt-BR", {
+                        {goal.target_date ? new Date(goal.target_date).toLocaleDateString("pt-BR", {
                           day: "2-digit",
                           month: "2-digit",
                           year: "numeric",
-                        })}
+                        }) : "N/A"}
                       </span>
                     </div>
-                    {goal.description && <p className="text-sm mt-2">{goal.description}</p>}
                   </div>
                 </CardContent>
                 <CardFooter className="pt-2">
@@ -189,7 +171,7 @@ export default function GoalsPage() {
                       variant="outline"
                       size="sm"
                       className="flex-1"
-                      onClick={() => handleUpdateProgress(goal.id, 100)}
+                      onClick={() => handleUpdateProgress(goal._id, 100)}
                     >
                       +R$100
                     </Button>
@@ -197,7 +179,7 @@ export default function GoalsPage() {
                       variant="outline"
                       size="sm"
                       className="flex-1"
-                      onClick={() => handleUpdateProgress(goal.id, 500)}
+                      onClick={() => handleUpdateProgress(goal._id, 500)}
                     >
                       +R$500
                     </Button>
@@ -205,7 +187,7 @@ export default function GoalsPage() {
                       variant="outline"
                       size="sm"
                       className="flex-1"
-                      onClick={() => handleUpdateProgress(goal.id, 1000)}
+                      onClick={() => handleUpdateProgress(goal._id, 1000)}
                     >
                       +R$1000
                     </Button>
