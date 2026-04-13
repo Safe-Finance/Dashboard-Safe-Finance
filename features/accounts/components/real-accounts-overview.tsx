@@ -1,12 +1,14 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useQuery } from "convex/react"
+import { api } from "../../../../convex/_generated/api"
+import { Id } from "../../../../convex/_generated/dataModel"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { useLocale } from "@/contexts/locale-context"
 import { Skeleton } from "@/components/ui/skeleton"
 
 interface Account {
-  id: number
+  id: string | number
   name: string
   balance: number
   type: string
@@ -14,37 +16,25 @@ interface Account {
 }
 
 interface RealAccountsOverviewProps {
-  userId: number
+  userId: string | number
 }
 
 export function RealAccountsOverview({ userId }: RealAccountsOverviewProps) {
   const { formatCurrency } = useLocale()
-  const [accounts, setAccounts] = useState<Account[]>([])
-  const [isLoading, setIsLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
+  const accountsRaw = useQuery(api.accounts.list, {
+    userId: userId as Id<"users">,
+  })
 
-  useEffect(() => {
-    const fetchAccounts = async () => {
-      setIsLoading(true)
-      try {
-        const response = await fetch(`/api/accounts?userId=${userId}`)
+  const isLoading = accountsRaw === undefined
+  const error = null
 
-        if (!response.ok) {
-          throw new Error("Erro ao buscar contas")
-        }
-
-        const data = await response.json()
-        setAccounts(data.accounts)
-      } catch (error) {
-        console.error("Erro:", error)
-        setError("Não foi possível carregar suas contas. Por favor, tente novamente.")
-      } finally {
-        setIsLoading(false)
-      }
-    }
-
-    fetchAccounts()
-  }, [userId])
+  const accounts: Account[] = (accountsRaw ?? []).map((v) => ({
+    id: v._id,
+    name: v.name,
+    balance: v.balance,
+    type: v.type,
+    currency: v.currency ?? "BRL",
+  }))
 
   const totalBalance = accounts.reduce((sum, account) => sum + Number(account.balance), 0)
 

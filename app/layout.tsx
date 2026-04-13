@@ -84,6 +84,8 @@ export const metadata: Metadata = {
     generator: 'v0.app'
 }
 
+import { ConvexClientProvider } from "@/components/convex-client-provider"
+
 export default function RootLayout({
   children,
 }: {
@@ -104,16 +106,18 @@ export default function RootLayout({
         <link rel="shortcut icon" href="/favicon.ico" />
       </head>
       <body className={inter.className}>
-        <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>
-          <SettingsProvider>
-            <LocaleProvider>
-              <Layout>{children}</Layout>
-              <Toaster />
-              <PWAInstallButton />
-              <div className="noise-overlay" />
-            </LocaleProvider>
-          </SettingsProvider>
-        </ThemeProvider>
+        <ConvexClientProvider>
+          <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>
+            <SettingsProvider>
+              <LocaleProvider>
+                <Layout>{children}</Layout>
+                <Toaster />
+                <PWAInstallButton />
+                <div className="noise-overlay" />
+              </LocaleProvider>
+            </SettingsProvider>
+          </ThemeProvider>
+        </ConvexClientProvider>
       </body>
     </html>
   )

@@ -1,6 +1,9 @@
 "use client"
 
 import { useState } from "react"
+import { useQuery } from "convex/react"
+import { api } from "../../convex/_generated/api"
+import { Id } from "../../convex/_generated/dataModel"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Checkbox } from "@/components/ui/checkbox"
@@ -15,8 +18,9 @@ import { convertToCSV, downloadCSV, generateFileName } from "@/lib/export-utils"
 import { exportToPDF } from "@/lib/pdf-export"
 
 interface ExportDashboardDataProps {
-  userId: number
+  userId: string | number
 }
+
 
 export function ExportDashboardData({ userId }: ExportDashboardDataProps) {
   const [isLoading, setIsLoading] = useState(false)

@@ -10,54 +10,54 @@ import { useLocale } from "@/contexts/locale-context"
 import { Skeleton } from "@/components/ui/skeleton"
 import { ExportDataButton } from "@/components/export-data-button"
 import { exportToPDF } from "@/lib/pdf-export"
+import { useQuery } from "convex/react"
+import { api } from "../../convex/_generated/api"
+import { Id } from "../../convex/_generated/dataModel"
 
 interface Transaction {
-  id: number
-  account_id: number
+  id: string | number
+  account_id: string | number
   description: string
   amount: number
   type: string
   category: string
-  date: string
+  date: string | number
 }
 
 interface RealTransactionsProps {
-  userId: number
+  userId: string | number
 }
 
 export function RealTransactions({ userId }: RealTransactionsProps) {
   const { formatCurrency } = useLocale()
-  const [transactions, setTransactions] = useState<Transaction[]>([])
+  
+  // Buscar no convex diretamente
+  const transactionsRaw = useQuery(api.transactions.list, { 
+    userId: userId as Id<"users">
+  })
+  
   const [filteredTransactions, setFilteredTransactions] = useState<Transaction[]>([])
-  const [isLoading, setIsLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
   const [searchTerm, setSearchTerm] = useState("")
   const [categoryFilter, setCategoryFilter] = useState<string>("all")
   const [typeFilter, setTypeFilter] = useState<string>("all")
+  const [transactions, setTransactions] = useState<Transaction[]>([])
 
   useEffect(() => {
-    const fetchTransactions = async () => {
-      setIsLoading(true)
-      try {
-        const response = await fetch(`/api/transactions?userId=${userId}`)
-
-        if (!response.ok) {
-          throw new Error("Erro ao buscar transações")
-        }
-
-        const data = await response.json()
-        setTransactions(data.transactions)
-        setFilteredTransactions(data.transactions)
-      } catch (error) {
-        console.error("Erro:", error)
-        setError("Não foi possível carregar suas transações.")
-      } finally {
-        setIsLoading(false)
-      }
+    if (transactionsRaw) {
+      const formatted = transactionsRaw.map((v) => ({
+        id: v.transaction._id,
+        account_id: v.transaction.account_id,
+        description: v.transaction.description,
+        amount: v.transaction.amount,
+        type: v.transaction.type,
+        category: v.transaction.category || "Geral",
+        date: v.transaction.date
+      }));
+      setTransactions(formatted)
+      setFilteredTransactions(formatted)
     }
+  }, [transactionsRaw])
 
-    fetchTransactions()
-  }, [userId])
 
   useEffect(() => {
     let result = transactions
@@ -84,7 +84,7 @@ export function RealTransactions({ userId }: RealTransactionsProps) {
     setFilteredTransactions(result)
   }, [searchTerm, categoryFilter, typeFilter, transactions])
 
-  const formatDate = (dateString: string) => {
+  const formatDate = (dateString: string | number) => {
     const date = new Date(dateString)
     return new Intl.DateTimeFormat("pt-BR").format(date)
   }
@@ -113,6 +113,9 @@ export function RealTransactions({ userId }: RealTransactionsProps) {
       "landscape",
     )
   }
+
+  const isLoading = transactionsRaw === undefined;
+  const error = null; // Tratamento de erro ideal via ErrorBoundary no app Convex
 
   if (isLoading) {
     return (

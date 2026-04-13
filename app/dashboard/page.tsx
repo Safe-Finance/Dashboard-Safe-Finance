@@ -1,44 +1,26 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState } from "react"
+import { useQuery } from "convex/react"
+import { api } from "../../convex/_generated/api"
 import { RealAccountsOverview } from "@/features/accounts/components/real-accounts-overview"
 import { RealTransactions } from "@/features/transactions/components/real-transactions"
 import { SavingsGoalsDashboard } from "@/features/accounts/components/savings-goals-dashboard"
 import { InvoicesDashboard } from "@/features/transactions/components/invoices-dashboard"
 import { Skeleton } from "@/components/ui/skeleton"
+import { Id } from "../../convex/_generated/dataModel"
 
 export default function DashboardPage() {
   // Normalmente, você obteria o ID do usuário da sessão
-  // Para este exemplo, usaremos um ID fixo
-  const userId = 1
-  const [selectedAccountId, setSelectedAccountId] = useState<number | null>(null)
-  const [accounts, setAccounts] = useState<any[]>([])
-  const [isLoading, setIsLoading] = useState(true)
+  // Para este exemplo, usaremos um ID fixo — será substituído pela integração de Auth
+  const userId = 1 as unknown as Id<"users">
 
-  useEffect(() => {
-    const fetchAccounts = async () => {
-      try {
-        const response = await fetch(`/api/accounts?userId=${userId}`)
-
-        if (!response.ok) {
-          throw new Error("Erro ao buscar contas")
-        }
-
-        const data = await response.json()
-        setAccounts(data.accounts)
-
-        if (data.accounts.length > 0) {
-          setSelectedAccountId(data.accounts[0].id)
-        }
-      } catch (error) {
-        console.error("Erro:", error)
-      } finally {
-        setIsLoading(false)
-      }
-    }
-
-    fetchAccounts()
-  }, [userId])
+  const accountsRaw = useQuery(api.accounts.list, { userId })
+  const isLoading = accountsRaw === undefined
+  const accounts = accountsRaw ?? []
+  const [selectedAccountId, setSelectedAccountId] = useState<string | null>(
+    accounts.length > 0 ? String(accounts[0]._id) : null
+  )
 
   if (isLoading) {
     return (

@@ -16,8 +16,8 @@ export const addUser = mutation({
   handler: async (ctx, args) => {
     const userId = await ctx.db.insert("users", {
       ...args,
-      created_at: Date.now(),
-      updated_at: Date.now(),
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
     });
     return userId;
   },

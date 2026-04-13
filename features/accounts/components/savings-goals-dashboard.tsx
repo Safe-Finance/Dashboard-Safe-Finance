@@ -8,8 +8,12 @@ import { PlusCircle } from "lucide-react"
 import { useLocale } from "@/contexts/locale-context"
 import { Skeleton } from "@/components/ui/skeleton"
 
+import { useQuery } from "convex/react"
+import { api } from "../../../../convex/_generated/api"
+import { Id } from "../../../../convex/_generated/dataModel"
+
 interface SavingsGoal {
-  id: number
+  id: string | number
   name: string
   target_amount: number
   current_amount: number
@@ -17,37 +21,30 @@ interface SavingsGoal {
 }
 
 interface SavingsGoalsDashboardProps {
-  userId: number
+  userId: string | number
 }
 
 export function SavingsGoalsDashboard({ userId }: SavingsGoalsDashboardProps) {
   const { formatCurrency } = useLocale()
+  const goalsRaw = useQuery(api.savings_goals.list, { 
+    userId: userId as Id<"users">
+  })
   const [goals, setGoals] = useState<SavingsGoal[]>([])
-  const [isLoading, setIsLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
-    const fetchGoals = async () => {
-      setIsLoading(true)
-      try {
-        const response = await fetch(`/api/savings-goals?userId=${userId}`)
-
-        if (!response.ok) {
-          throw new Error("Erro ao buscar metas de economia")
-        }
-
-        const data = await response.json()
-        setGoals(data.goals)
-      } catch (error) {
-        console.error("Erro:", error)
-        setError("Não foi possível carregar suas metas de economia.")
-      } finally {
-        setIsLoading(false)
-      }
+    if (goalsRaw) {
+      setGoals(goalsRaw.map(v => ({
+        id: v._id,
+        name: v.name,
+        target_amount: v.target_amount,
+        current_amount: v.current_amount,
+        target_date: v.target_date || ""
+      })))
     }
+  }, [goalsRaw])
 
-    fetchGoals()
-  }, [userId])
+  const isLoading = goalsRaw === undefined;
+  const error = null;
 
   const formatDate = (dateString: string) => {
     const date = new Date(dateString)

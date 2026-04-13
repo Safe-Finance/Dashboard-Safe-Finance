@@ -1,5 +1,8 @@
 "use client"
 
+import { useQuery, useMutation } from "convex/react"
+import { api } from "../../../convex/_generated/api"
+import { Id } from "../../../convex/_generated/dataModel"
 import { useState, useEffect } from "react"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -25,7 +28,7 @@ import { ExportDataButton } from "@/components/export-data-button"
 import { exportToPDF } from "@/lib/pdf-export"
 
 interface Budget {
-  id: number
+  id: string | number
   category: string
   amount: number
   period: string
@@ -34,42 +37,38 @@ interface Budget {
 }
 
 interface BudgetManagerProps {
-  userId: number
+  userId: string | number
 }
 
 export function BudgetManager({ userId }: BudgetManagerProps) {
+  const budgetsRaw = useQuery(api.budgets.list, {
+    userId: userId as Id<"users">
+  })
+  const createBudget = useMutation(api.budgets.create)
+  const updateBudget = useMutation(api.budgets.update)
+  const removeBudget = useMutation(api.budgets.remove)
+
   const [budgets, setBudgets] = useState<Budget[]>([])
-  const [isLoading, setIsLoading] = useState(true)
+
+  useEffect(() => {
+    if (budgetsRaw) {
+      setBudgets(budgetsRaw.map(v => ({
+        id: v._id,
+        category: v.category,
+        amount: v.amount,
+        period: v.period,
+        start_date: v.start_date,
+        end_date: v.end_date
+      })))
+    }
+  }, [budgetsRaw])
+
+  const isLoading = budgetsRaw === undefined;
   const [isDialogOpen, setIsDialogOpen] = useState(false)
   const [isEditing, setIsEditing] = useState(false)
   const [currentBudget, setCurrentBudget] = useState<Partial<Budget>>({})
   const [startDate, setStartDate] = useState<Date>()
   const [endDate, setEndDate] = useState<Date>()
-
-  const fetchBudgets = async () => {
-    setIsLoading(true)
-    try {
-      const response = await fetch(`/api/budgets?userId=${userId}`)
-      if (!response.ok) {
-        throw new Error("Erro ao buscar orçamentos")
-      }
-      const data = await response.json()
-      setBudgets(data)
-    } catch (error) {
-      console.error("Erro:", error)
-      toast({
-        title: "Erro",
-        description: "Não foi possível carregar os orçamentos",
-        variant: "destructive",
-      })
-    } finally {
-      setIsLoading(false)
-    }
-  }
-
-  useEffect(() => {
-    fetchBudgets()
-  }, [userId])
 
   const handleCreateOrUpdate = async () => {
     if (!currentBudget.category || !currentBudget.amount || !currentBudget.period || !startDate) {
@@ -82,28 +81,24 @@ export function BudgetManager({ userId }: BudgetManagerProps) {
     }
 
     try {
-      const endpoint = "/api/budgets"
-      const method = isEditing ? "PUT" : "POST"
-      const body = {
-        ...(isEditing && { id: currentBudget.id }),
-        userId,
-        category: currentBudget.category,
-        amount: currentBudget.amount,
-        period: currentBudget.period,
-        startDate: startDate.toISOString(),
-        endDate: endDate?.toISOString(),
-      }
-
-      const response = await fetch(endpoint, {
-        method,
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(body),
-      })
-
-      if (!response.ok) {
-        throw new Error(`Erro ao ${isEditing ? "atualizar" : "criar"} orçamento`)
+      if (isEditing) {
+        await updateBudget({
+          id: currentBudget.id as Id<"budgets">,
+          category: currentBudget.category,
+          amount: currentBudget.amount,
+          period: currentBudget.period,
+          startDate: startDate.toISOString(),
+          endDate: endDate?.toISOString(),
+        })
+      } else {
+        await createBudget({
+          userId: userId as Id<"users">,
+          category: currentBudget.category,
+          amount: currentBudget.amount,
+          period: currentBudget.period,
+          startDate: startDate.toISOString(),
+          endDate: endDate?.toISOString(),
+        })
       }
 
       toast({
@@ -113,7 +108,6 @@ export function BudgetManager({ userId }: BudgetManagerProps) {
 
       setIsDialogOpen(false)
       resetForm()
-      fetchBudgets()
     } catch (error) {
       console.error("Erro:", error)
       toast({
@@ -124,26 +118,18 @@ export function BudgetManager({ userId }: BudgetManagerProps) {
     }
   }
 
-  const handleDelete = async (id: number) => {
+  const handleDelete = async (id: string | number) => {
     if (!confirm("Tem certeza que deseja excluir este orçamento?")) {
       return
     }
 
     try {
-      const response = await fetch(`/api/budgets?id=${id}`, {
-        method: "DELETE",
-      })
-
-      if (!response.ok) {
-        throw new Error("Erro ao excluir orçamento")
-      }
+      await removeBudget({ id: id as Id<"budgets"> })
 
       toast({
         title: "Sucesso",
         description: "Orçamento excluído com sucesso",
       })
-
-      fetchBudgets()
     } catch (error) {
       console.error("Erro:", error)
       toast({

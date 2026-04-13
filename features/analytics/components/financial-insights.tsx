@@ -1,12 +1,14 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useQuery } from "convex/react"
+import { api } from "../../../../convex/_generated/api"
+import { Id } from "../../../../convex/_generated/dataModel"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Lightbulb, TrendingUp, PieChart, AlertTriangle } from "lucide-react"
 
 interface Insight {
-  id: number
+  id: string | number
   title: string
   content: string
   category: string
@@ -14,36 +16,24 @@ interface Insight {
 }
 
 interface FinancialInsightsProps {
-  userId: number
+  userId: string | number
 }
 
 export function FinancialInsights({ userId }: FinancialInsightsProps) {
-  const [insights, setInsights] = useState<Insight[]>([])
-  const [isLoading, setIsLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
+  const insightsRaw = useQuery(api.financial_insights.list, {
+    userId: userId as Id<"users">,
+  })
 
-  useEffect(() => {
-    const fetchInsights = async () => {
-      setIsLoading(true)
-      try {
-        const response = await fetch(`/api/insights?userId=${userId}`)
+  const isLoading = insightsRaw === undefined
+  const error = null
 
-        if (!response.ok) {
-          throw new Error("Erro ao buscar insights")
-        }
-
-        const data = await response.json()
-        setInsights(data.insights)
-      } catch (error) {
-        console.error("Erro:", error)
-        setError("Não foi possível carregar seus insights financeiros.")
-      } finally {
-        setIsLoading(false)
-      }
-    }
-
-    fetchInsights()
-  }, [userId])
+  const insights: Insight[] = (insightsRaw ?? []).map((v) => ({
+    id: v._id,
+    title: v.title,
+    content: v.content,
+    category: v.category,
+    created_at: v.created_at,
+  }))
 
   const getIconForCategory = (category: string) => {
     switch (category) {

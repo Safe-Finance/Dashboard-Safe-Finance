@@ -10,8 +10,12 @@ import { Download, Plus } from "lucide-react"
 import { ExportDataButton } from "@/components/export-data-button"
 import { exportToPDF } from "@/lib/pdf-export"
 
+import { useQuery } from "convex/react"
+import { api } from "../../convex/_generated/api"
+import { Id } from "../../convex/_generated/dataModel"
+
 interface Invoice {
-  id: number
+  id: string | number
   client: string
   amount: number
   issue_date: string
@@ -20,37 +24,33 @@ interface Invoice {
 }
 
 interface InvoicesDashboardProps {
-  userId: number
+  userId: string | number
 }
 
 export function InvoicesDashboard({ userId }: InvoicesDashboardProps) {
   const { formatCurrency } = useLocale()
+  
+  const invoicesRaw = useQuery(api.invoices.list, { 
+    userId: userId as Id<"users">
+  })
+
   const [invoices, setInvoices] = useState<Invoice[]>([])
-  const [isLoading, setIsLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
-    const fetchInvoices = async () => {
-      setIsLoading(true)
-      try {
-        const response = await fetch(`/api/invoices?userId=${userId}`)
-
-        if (!response.ok) {
-          throw new Error("Erro ao buscar faturas")
-        }
-
-        const data = await response.json()
-        setInvoices(data.invoices)
-      } catch (error) {
-        console.error("Erro:", error)
-        setError("Não foi possível carregar suas faturas.")
-      } finally {
-        setIsLoading(false)
-      }
+    if (invoicesRaw) {
+      setInvoices(invoicesRaw.map(v => ({
+        id: v._id,
+        client: v.client,
+        amount: v.amount,
+        issue_date: v.issue_date,
+        due_date: v.due_date,
+        status: v.status
+      })))
     }
+  }, [invoicesRaw])
 
-    fetchInvoices()
-  }, [userId])
+  const isLoading = invoicesRaw === undefined;
+  const error = null;
 
   const formatDate = (dateString: string) => {
     const date = new Date(dateString)

@@ -6,8 +6,12 @@ import { Progress } from "@/components/ui/progress"
 import { Skeleton } from "@/components/ui/skeleton"
 import { AlertCircle, AlertTriangle } from "lucide-react"
 
+import { useQuery } from "convex/react"
+import { api } from "../../../convex/_generated/api"
+import { Id } from "../../../convex/_generated/dataModel"
+
 interface Budget {
-  id: number
+  id: string | number
   category: string
   amount: number
   period: string
@@ -16,7 +20,7 @@ interface Budget {
 }
 
 interface Transaction {
-  id: number
+  id: string | number
   description: string
   amount: number
   type: string
@@ -25,39 +29,52 @@ interface Transaction {
 }
 
 interface BudgetProgressProps {
-  userId: number
+  userId: string | number
 }
 
 export function BudgetProgress({ userId }: BudgetProgressProps) {
   const [budgets, setBudgets] = useState<Budget[]>([])
   const [transactions, setTransactions] = useState<Transaction[]>([])
-  const [isLoading, setIsLoading] = useState(true)
   const [budgetProgress, setBudgetProgress] = useState<Record<string, { spent: number; percentage: number }>>({})
+
+  const budgetsRaw = useQuery(api.budgets.list, { userId: userId as Id<"users"> });
+  const transactionsRaw = useQuery(api.transactions.list, { userId: userId as Id<"users"> });
+
+  const isLoading = budgetsRaw === undefined || transactionsRaw === undefined;
 
   useEffect(() => {
     const fetchData = async () => {
-      setIsLoading(true)
+      if (!budgetsRaw || !transactionsRaw) return;
+
       try {
-        // Buscar orçamentos
-        const budgetsResponse = await fetch(`/api/budgets?userId=${userId}`)
-        if (!budgetsResponse.ok) {
-          throw new Error("Erro ao buscar orçamentos")
-        }
-        const budgetsData = await budgetsResponse.json()
+        const budgetsData = budgetsRaw.map(v => ({
+          id: v._id,
+          category: v.category,
+          amount: v.amount,
+          period: v.period,
+          start_date: v.start_date,
+          end_date: v.end_date
+        }));
         setBudgets(budgetsData)
 
-        // Buscar transações do mês atual
         const now = new Date()
-        const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1).toISOString()
-        const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0).toISOString()
+        const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1)
+        const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0)
 
-        const transactionsResponse = await fetch(
-          `/api/transactions?userId=${userId}&startDate=${startOfMonth}&endDate=${endOfMonth}`,
-        )
-        if (!transactionsResponse.ok) {
-          throw new Error("Erro ao buscar transações")
-        }
-        const transactionsData = await transactionsResponse.json()
+        const transactionsData = transactionsRaw
+          .filter(t => {
+            const date = new Date(t.date);
+            return date >= startOfMonth && date <= endOfMonth;
+          })
+          .map(t => ({
+            id: t._id,
+            description: t.description,
+            amount: t.amount,
+            type: t.type,
+            category: t.category,
+            date: t.date,
+          }));
+
         setTransactions(transactionsData)
 
         // Calcular progresso do orçamento
@@ -78,13 +95,11 @@ export function BudgetProgress({ userId }: BudgetProgressProps) {
         setBudgetProgress(progress)
       } catch (error) {
         console.error("Erro:", error)
-      } finally {
-        setIsLoading(false)
       }
     }
 
     fetchData()
-  }, [userId])
+  }, [budgetsRaw, transactionsRaw])
 
   const formatCurrency = (value: number) => {
     return new Intl.NumberFormat("pt-BR", {
